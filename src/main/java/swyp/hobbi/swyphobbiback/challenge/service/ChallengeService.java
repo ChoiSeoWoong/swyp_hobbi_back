@@ -2,10 +2,11 @@ package swyp.hobbi.swyphobbiback.challenge.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import swyp.hobbi.swyphobbiback.challenge.domain.Challenge;
 import swyp.hobbi.swyphobbiback.challenge.domain.ChallengeDefaults;
-import swyp.hobbi.swyphobbiback.challenge.dto.ChallengeCache;
-import swyp.hobbi.swyphobbiback.challenge.dto.ChallengeCacheResponse;
+import swyp.hobbi.swyphobbiback.challenge.domain.ChallengeType;
+import swyp.hobbi.swyphobbiback.challenge.dto.ChallengeResponse;
 import swyp.hobbi.swyphobbiback.challenge.repository.ChallengeRepository;
 import swyp.hobbi.swyphobbiback.common.error.ErrorCode;
 import swyp.hobbi.swyphobbiback.common.exception.CustomException;
@@ -21,39 +22,35 @@ import java.time.temporal.TemporalAdjusters;
 @RequiredArgsConstructor
 public class ChallengeService {
     private final ChallengeRepository challengeRepository;
-    private final ChallengeCacheService challengeCacheService;
     private final UserRankService userRankService;
 
-    public ChallengeCacheResponse getChallengeCache(Long userId) {
+    public ChallengeResponse getChallenge(Long userId) {
         LocalDateTime weekStart = getStartOfWeek(LocalDateTime.now());
-        ChallengeCache cache = challengeCacheService.getCache(userId, weekStart);
 
-        if(cache == null) {
-            Challenge challenge = challengeRepository.findByUserIdAndStartedAt(userId, weekStart)
-                    .orElseGet(() -> createChallenge(userId, weekStart));
-            challengeCacheService.updateCache(userId, weekStart, ChallengeCache.from(challenge));
-            cache = challengeCacheService.getCache(userId, weekStart);
-        }
-
-        return ChallengeCacheResponse.from(cache);
-    }
-
-    public void startSpecificChallenge(Long userId, int challengeNumber) {
-        LocalDateTime weekStart = getStartOfWeek(LocalDateTime.now());
         Challenge challenge = challengeRepository.findByUserIdAndStartedAt(userId, weekStart)
                 .orElseGet(() -> createChallenge(userId, weekStart));
 
-        switch (challengeNumber) {
-            case 1 -> challenge.setChallenge1Started(true);
-            case 2 -> challenge.setChallenge2Started(true);
-            case 3 -> challenge.setChallenge3Started(true);
+        return ChallengeResponse.of(challenge);
+    }
+
+    @Transactional
+    public void startSpecificChallenge(Long userId, String challengeType) {
+        LocalDateTime weekStart = getStartOfWeek(LocalDateTime.now());
+        Challenge challenge = challengeRepository.findByUserIdAndStartedAt(userId, weekStart)
+                .orElseGet(() -> createChallenge(userId, weekStart));
+        ChallengeType type = ChallengeType.valueOf(challengeType);
+
+        switch (type) {
+            case SHOWOFF -> challenge.setHobbyShowOffStarted(true);
+            case ROUTINER -> challenge.setHobbyRoutinerStarted(true);
+            case RICH -> challenge.setHobbyRichStarted(true);
             default -> throw new CustomException(ErrorCode.INVALID_INPUT_VALUE);
         }
 
         challengeRepository.save(challenge);
-        challengeCacheService.updateCache(userId, weekStart, ChallengeCache.from(challenge));
     }
 
+    @Transactional
     public void evaluateChallenges(Long userId) {
         LocalDateTime weekStart = getStartOfWeek(LocalDateTime.now());
         LocalDateTime weekEnd = getEndOfWeek(weekStart);
@@ -65,41 +62,39 @@ public class ChallengeService {
         }
 
         // 취미 자랑 챌린지 - 좋아요 누적 50개
-        if(challenge.getChallenge1Started() && !challenge.getChallenge1Achieved()) {
+        if(challenge.getHobbyShowOffStarted() && !challenge.getHobbyShowOffAchieved()) {
             Integer likeCount = challengeRepository.countLikeThisWeek(userId, weekStart, weekEnd);
-            challenge.setChallenge1Point(likeCount);
+            challenge.setHobbyShowOffPoint(likeCount);
 
             if(likeCount >= ChallengeDefaults.LIKE_STACK_COUNT) {
-                challenge.setChallenge1Achieved(true);
+                challenge.setHobbyShowOffAchieved(true);
                 userRankService.addExp(userId, 10);
             }
         }
 
         // 루티너 챌린지 - 같은 취미 게시글 3개
-        if(challenge.getChallenge2Started() && !challenge.getChallenge2Achieved()) {
+        if(challenge.getHobbyRoutinerStarted() && !challenge.getHobbyRoutinerAchieved()) {
             Integer count = challengeRepository.countPostsWithSameTagsThisWeek(userId, weekStart, weekEnd);
-            challenge.setChallenge2Point(count);
+            challenge.setHobbyRoutinerPoint(count);
 
             if (count >= ChallengeDefaults.POST_SAME_TAGS_COUNT) {
-                challenge.setChallenge2Achieved(true);
+                challenge.setHobbyRoutinerAchieved(true);
                 userRankService.addExp(userId, 10);
             }
         }
 
         // 취미 부자 챌린지 - 다른 취미 게시글 3개
-        if(challenge.getChallenge3Started() && !challenge.getChallenge3Achieved()) {
+        if(challenge.getHobbyRichStarted() && !challenge.getHobbyRichAchieved()) {
             Integer count = challengeRepository.countPostsWithDiffTagsThisWeek(userId, weekStart, weekEnd);
-            challenge.setChallenge3Point(count);
+            challenge.setHobbyRichPoint(count);
 
             if (count >= ChallengeDefaults.POST_DIFF_TAGS_COUNT) {
-                challenge.setChallenge3Achieved(true);
+                challenge.setHobbyRichAchieved(true);
                 userRankService.addExp(userId, 10);
             }
         }
 
-        challenge.setRemainedSeconds(calculateRemainedAt(weekStart).getSeconds());
         challengeRepository.save(challenge);
-        challengeCacheService.updateCache(userId, weekStart, ChallengeCache.from(challenge));
     }
 
     private LocalDateTime getStartOfWeek(LocalDateTime dateTime) {
@@ -116,19 +111,11 @@ public class ChallengeService {
         Challenge challenge = Challenge.builder()
                 .userId(userId)
                 .startedAt(weekStart)
-                .remainedSeconds(calculateRemainedAt(weekStart).getSeconds())
-                .challenge1Point(ChallengeDefaults.ZERO)
-                .challenge2Point(ChallengeDefaults.ZERO)
-                .challenge3Point(ChallengeDefaults.ZERO)
+                .hobbyShowOffPoint(ChallengeDefaults.ZERO)
+                .hobbyRoutinerPoint(ChallengeDefaults.ZERO)
+                .hobbyRichPoint(ChallengeDefaults.ZERO)
                 .build();
 
         return challengeRepository.save(challenge);
-    }
-
-    private Duration calculateRemainedAt(LocalDateTime weekStart) {
-        LocalDateTime weekEnd = getEndOfWeek(weekStart);
-        LocalDateTime now = LocalDateTime.now();
-
-        return Duration.between(now, weekEnd);
     }
 }

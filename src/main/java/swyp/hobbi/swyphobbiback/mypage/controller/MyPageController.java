@@ -10,15 +10,15 @@ import swyp.hobbi.swyphobbiback.common.error.ErrorCode;
 import swyp.hobbi.swyphobbiback.common.exception.CustomException;
 import swyp.hobbi.swyphobbiback.common.security.CustomUserDetails;
 import swyp.hobbi.swyphobbiback.mypage.dto.*;
-import swyp.hobbi.swyphobbiback.mypage.service.MypageService;
+import swyp.hobbi.swyphobbiback.mypage.service.MyPageService;
 
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("api/v1")
-public class MypageController {
+public class MyPageController {
 
-    private final MypageService mypageService;
+    private final MyPageService myPageService;
 
     private Long getCurrentUserId() {
         CustomUserDetails userDetails = (CustomUserDetails)
@@ -29,14 +29,14 @@ public class MypageController {
     @GetMapping("/my-page")
     public ResponseEntity<MyPageResponse> getMyPageInfo() {
         Long userId = getCurrentUserId();
-        MyPageResponse response = mypageService.getMyPageInfo(userId);
+        MyPageResponse response = myPageService.getMyPageInfo(userId);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/my-page/my-modify-page") // 개인정보수정 페이지 조회
     public ResponseEntity<MyModifyPageResponse> getMyModifyPageInfo() {
         Long userId = getCurrentUserId();
-        MyModifyPageResponse response = mypageService.getMyModifyPageInfo(userId);
+        MyModifyPageResponse response = myPageService.getMyModifyPageInfo(userId);
         return ResponseEntity.ok(response);
     }
 
@@ -44,7 +44,7 @@ public class MypageController {
     public ResponseEntity<Void> updateMyPageInfo(@RequestBody MyPageUpdateRequest request,
                                                  @AuthenticationPrincipal CustomUserDetails userDetails) {
         Long userId = userDetails.getUserId();
-        mypageService.updateMyPageInfo(userId, request);
+        myPageService.updateMyPageInfo(userId, request);
         return ResponseEntity.ok().build();
     }
 
@@ -52,14 +52,14 @@ public class MypageController {
     public ResponseEntity<Void> updateNickname(@RequestBody NicknameUpdateRequest request,
                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
 
-        mypageService.updateNickname(userDetails.getUserId(), request.getNickname());
+        myPageService.updateNickname(userDetails.getUserId(), request.getNickname());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("my-page/update/password/check") // 현재 비밀번호 확인
     public ResponseEntity<PasswordCheckResponse> PasswordCheck(@RequestBody PasswordCheckRequest request,
                                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
-        boolean check = mypageService.checkPassword(userDetails.getUserId(), request.getCurrentPassword());
+        boolean check = myPageService.checkPassword(userDetails.getUserId(), request.getCurrentPassword());
         if (!check) {
             throw new CustomException(ErrorCode.PASSWORD_NOT_MATCH);
         }
@@ -69,14 +69,14 @@ public class MypageController {
     @PutMapping("/my-page/update/password") // 비밀번호 변경
     public ResponseEntity<Void> updatePassword(@RequestBody PasswordUpdateRequest request,
                                                @AuthenticationPrincipal CustomUserDetails userDetails) {
-        mypageService.updatePassword(userDetails.getUserId(), request.getNewPassword(), request.getConfirmPassword());
+        myPageService.updatePassword(userDetails.getUserId(), request.getNewPassword(), request.getConfirmPassword());
         return ResponseEntity.ok().build();
     }
 
     @PostMapping(value = "/my-page/update/profile-image", consumes = "multipart/form-data")
     public ResponseEntity<String> uploadProfileImage(@RequestPart MultipartFile profileImage,
                                                      @AuthenticationPrincipal CustomUserDetails userDetails) {
-        String userImageUrl = mypageService.uploadAndSaveProfileImage(userDetails.getUserId(), profileImage);
+        String userImageUrl = myPageService.uploadAndSaveProfileImage(userDetails.getUserId(), profileImage);
         return ResponseEntity.ok(userImageUrl);
     }
 
@@ -84,7 +84,7 @@ public class MypageController {
     @PostMapping("/my-page/validation/nickname")
     public ResponseEntity<NicknameDuplicateResponse> validateNickname(@RequestBody NicknameUpdateRequest request) {
 
-        Boolean exists = mypageService.isNicknameDuplicate(request.getNickname());
+        Boolean exists = myPageService.isNicknameDuplicate(request.getNickname());
         String message = exists ? "이미 존재하는 닉네임입니다." : "사용 가능한 닉네임입니다.";
 
         NicknameDuplicateResponse response = new NicknameDuplicateResponse(exists, message);
@@ -98,7 +98,7 @@ public class MypageController {
             @RequestParam(defaultValue = "10") int pageSize) {
 
         Long userId = userDetails.getUserId();
-        MyPostsScrollResponse response = mypageService.getMyPosts(userId, lastPostId, pageSize);
+        MyPostsScrollResponse response = myPageService.getMyPosts(userId, lastPostId, pageSize);
         return ResponseEntity.ok(response);
     }
 }

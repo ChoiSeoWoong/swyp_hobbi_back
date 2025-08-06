@@ -6,7 +6,7 @@ import swyp.hobbi.swyphobbiback.email.domain.EmailVerification;
 import java.util.Optional;
 
 public interface EmailVerificationRepository extends JpaRepository<EmailVerification, Long> {
-    Optional<EmailVerification> findByToken(String token);
     Optional<EmailVerification> findByEmail(String email);
-    Optional<EmailVerification> findByEmailAndToken(String email, String token);
+    Optional<EmailVerification> findByEmailAndCode(String email, String code);
+    void deleteByEmail(String email);
 }

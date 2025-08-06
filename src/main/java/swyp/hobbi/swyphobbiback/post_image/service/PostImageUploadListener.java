@@ -1,7 +1,6 @@
 package swyp.hobbi.swyphobbiback.post_image.service;
 
-import com.amazonaws.services.s3.AmazonS3Client;
-import com.amazonaws.services.s3.model.CannedAccessControlList;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +18,9 @@ import java.io.IOException;
 @RequiredArgsConstructor
 @Slf4j
 public class PostImageUploadListener {
-    private static final String BUCKET_NAME = "hobbi-img";
+    private static final String BUCKET_NAME = "hobbi-dev";
 
-    private final AmazonS3Client objectStorageClient;
+    private final AmazonS3 amazonS3;
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePostImageUploadEvent(PostImageUploadEvent event) {
@@ -33,8 +32,7 @@ public class PostImageUploadListener {
             String fileName = event.getFileName();
 
             PutObjectRequest request = new PutObjectRequest(BUCKET_NAME, fileName, file.getInputStream(), metadata);
-            request.setCannedAcl(CannedAccessControlList.PublicRead);
-            objectStorageClient.putObject(request);
+            amazonS3.putObject(request);
         } catch (IOException e) {
             log.error("이미지 업로드 실패 : {}", event.getFileName());
             throw new FileUploadFailedException();

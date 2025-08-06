@@ -22,7 +22,7 @@ public class EmailVerification {
 
     private String email;
 
-    private String token;
+    private String code;
 
     private Boolean verified; //인증 완료 여부
 

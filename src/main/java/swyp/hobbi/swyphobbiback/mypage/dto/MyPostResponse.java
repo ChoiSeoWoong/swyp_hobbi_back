@@ -11,7 +11,7 @@ import java.util.List;
 @Getter
 @Builder
 @AllArgsConstructor
-public class MyPost {
+public class MyPostResponse {
     private Long postId;
     private String postTitle;
     private String postContents;
@@ -22,8 +22,8 @@ public class MyPost {
     private Long commentCount;
     private Long likeCount;
 
-    public static MyPost from(Post post, Long commentCount, Long likeCount) {
-        return MyPost.builder()
+    public static MyPostResponse from(Post post, Long commentCount, Long likeCount) {
+        return MyPostResponse.builder()
                 .postId(post.getPostId())
                 .postTitle(post.getPostTitle())
                 .postContents(post.getPostContent())

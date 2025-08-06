@@ -40,12 +40,13 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRankRepository userRankRepository;
 
+    private static final String DELETED_NICKNAME_PREFIX = "탈퇴한사용자_";
+
     public UserResponse signUp(UserCreateRequest request) {
 
         if (!emailVerificationRepository.findByEmail(request.getEmail()).map(EmailVerification::getVerified).orElse(false)) {
             throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
         }
-
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
         }
@@ -128,7 +129,7 @@ public class UserService {
         refreshTokenRepository.deleteByEmail(user.getEmail());
 
         // 닉네임 비식별 처리
-        user.setNickname("탈퇴한사용자_" + UUID.randomUUID().toString().substring(0, 6));
+        user.setNickname(generateAnonymousNickname());
 
         // 탈퇴 처리
         user.setIsDeleted(true);
@@ -146,5 +147,10 @@ public class UserService {
     public void logout(String email) {
         refreshTokenRepository.deleteByEmail(email);
     }
+
+    private String generateAnonymousNickname() {
+        return DELETED_NICKNAME_PREFIX + UUID.randomUUID().toString().substring(0, 6);
+    }
+
 
 }

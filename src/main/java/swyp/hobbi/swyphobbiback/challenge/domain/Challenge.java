@@ -21,24 +21,24 @@ public class Challenge {
 
     private Long userId;
 
-    private Integer challenge1Point;
-    private Integer challenge2Point;
-    private Integer challenge3Point;
+    // HobbyShowOff, HobbyRoutiner, HobbyRich
+    private Integer hobbyShowOffPoint;
+    private Integer hobbyRoutinerPoint;
+    private Integer hobbyRichPoint;
 
     @Builder.Default
-    private Boolean challenge1Started = false;
+    private Boolean hobbyShowOffStarted = false;
     @Builder.Default
-    private Boolean challenge2Started = false;
+    private Boolean hobbyRoutinerStarted = false;
     @Builder.Default
-    private Boolean challenge3Started = false;
+    private Boolean hobbyRichStarted = false;
 
     @Builder.Default
-    private Boolean challenge1Achieved = false;
+    private Boolean hobbyShowOffAchieved = false;
     @Builder.Default
-    private Boolean challenge2Achieved = false;
+    private Boolean hobbyRoutinerAchieved = false;
     @Builder.Default
-    private Boolean challenge3Achieved = false;
+    private Boolean hobbyRichAchieved = false;
 
     private LocalDateTime startedAt;
-    private Long remainedSeconds;
 }

@@ -25,7 +25,6 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
         JOIN post p on pl.post_id = p.post_id
         JOIN user u on pl.user_id = u.user_id
         WHERE pl.post_id IN (:postIds) and pl.user_id = :userId
-        GROUP BY pl.post_id
         """, nativeQuery = true)
     List<LikeProjection> findLikeYnByPostIdsAndUserId(@Param("postIds") List<Long> postIds, @Param("userId") Long userId);
 }

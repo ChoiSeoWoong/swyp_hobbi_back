@@ -49,6 +49,4 @@ public interface ChallengeRepository extends JpaRepository<Challenge, Long> {
         )
         """)
     Integer countPostsWithDiffTagsThisWeek(@Param("userId") Long userId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
-    List<Challenge> findByStartedAtBefore(LocalDateTime startedAtBefore);
 }

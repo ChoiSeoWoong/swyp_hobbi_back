@@ -2,6 +2,8 @@ package swyp.hobbi.swyphobbiback.post.controller;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -9,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import swyp.hobbi.swyphobbiback.common.security.CustomUserDetails;
 import swyp.hobbi.swyphobbiback.post.dto.PostCreateRequest;
 import swyp.hobbi.swyphobbiback.post.dto.PostResponse;
+import swyp.hobbi.swyphobbiback.post.dto.PostSearchRequest;
 import swyp.hobbi.swyphobbiback.post.dto.PostUpdateRequest;
 import swyp.hobbi.swyphobbiback.post.service.PostService;
 
@@ -66,4 +69,14 @@ public class PostController {
         final List<PostResponse> postsInfiniteScroll = postService.findPostsInfiniteScroll(userDetails, tagExist, lastPostId, pageSize);
         return ResponseEntity.ok(postsInfiniteScroll);
     }
+
+    @PostMapping("/search")
+    public ResponseEntity<Page<PostResponse>> searchPosts(
+            @RequestBody PostSearchRequest request,
+            Pageable pageable
+    ) {
+        Page<PostResponse> result = postService.search(request, pageable);
+        return ResponseEntity.ok(result);
+    }
+
 }

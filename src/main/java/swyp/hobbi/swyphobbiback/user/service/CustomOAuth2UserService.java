@@ -38,8 +38,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService{
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(provider, oAuth2User.getAttributes());
         String oauthEmail = userInfo.getEmail();
 
-        log.info("[소셜 로그인 시도] provider={}, email={}", provider, oauthEmail);
-
         // 기존 attribute 복사 + 추가 데이터 삽입
         Map<String, Object> modifiedAttributes = new HashMap<>(oAuth2User.getAttributes());
         modifiedAttributes.put("email", oauthEmail);
@@ -57,8 +55,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService{
         // 연동 확인
         OauthLogin oauthLogin = oauthLoginRepository.findByProviderEmailAndProvider(oauthEmail, provider)
                 .orElseThrow(() -> new OAuth2AuthenticationException(new OAuth2Error("USER_NOT_FOUND", "연동되지 않은 사용자입니다.", null)));
-
-        log.info("[소셜 로그인 성공] 연동된 userId={}", oauthLogin.getUser().getUserId());
 
         return new DefaultOAuth2User(
                 oAuth2User.getAuthorities(),

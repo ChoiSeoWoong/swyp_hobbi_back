@@ -1,6 +1,6 @@
 package swyp.hobbi.swyphobbiback.mypage.service;
 
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.CannedAccessControlList;
 import com.amazonaws.services.s3.model.DeleteObjectRequest;
 import com.amazonaws.services.s3.model.ObjectMetadata;
@@ -20,10 +20,10 @@ import java.util.UUID;
 @Slf4j
 public class ProfileImageService {
 
-    private static final String BUCKET_NAME = "hobbi-img";
-    private static final String PREFIX_IMAGE_URL = "https://kr.object.ncloudstorage.com/";
+    private static final String BUCKET_NAME = "hobbi-dev";
+    private static final String PREFIX_IMAGE_URL = "https://hobbi-dev.s3.ap-northeast-2.amazonaws.com/";
 
-    private final AmazonS3Client s3Client;
+    private final AmazonS3 amazonS3;
 
     public String uploadProfileImage(MultipartFile file, String userEmail) {
         String fileName = "profile/" + userEmail + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -33,7 +33,7 @@ public class ProfileImageService {
         try {
             metadata.setContentLength(file.getSize());
             //이미지 업로드
-            s3Client.putObject(
+            amazonS3.putObject(
                     new PutObjectRequest(BUCKET_NAME, fileName, file.getInputStream(), metadata)
                             .withCannedAcl(CannedAccessControlList.PublicRead)
             );
@@ -47,7 +47,7 @@ public class ProfileImageService {
 
     public void deleteProfileImage(String imageUrl) {
         String key = imageUrl.replace(PREFIX_IMAGE_URL + BUCKET_NAME + "/", "");
-        s3Client.deleteObject(new DeleteObjectRequest(BUCKET_NAME, key));
+        amazonS3.deleteObject(new DeleteObjectRequest(BUCKET_NAME, key));
     }
 }
 

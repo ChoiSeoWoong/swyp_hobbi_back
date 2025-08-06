@@ -15,7 +15,6 @@ public interface LikeCountRepository extends JpaRepository<LikeCount, Long> {
         SELECT plc.post_id AS postId, plc.like_count AS likeCount FROM post_like_count plc
         JOIN post p on plc.post_id = p.post_id
         WHERE plc.post_id IN (:postIds)
-        GROUP BY plc.post_id
         """, nativeQuery = true)
     List<LikeCountProjection> findLikeCountByPostIds(@Param("postIds") List<Long> postIds);
 }

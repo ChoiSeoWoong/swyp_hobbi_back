@@ -8,6 +8,6 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 public class MyPostsScrollResponse {
-    private List<MyPost> posts;
+    private List<MyPostResponse> posts;
     private Boolean isLast;
 }

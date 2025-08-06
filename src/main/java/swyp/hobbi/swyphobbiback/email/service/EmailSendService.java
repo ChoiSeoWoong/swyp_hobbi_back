@@ -6,6 +6,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import swyp.hobbi.swyphobbiback.common.error.ErrorCode;
+import swyp.hobbi.swyphobbiback.common.exception.CustomException;
 
 @Service
 @RequiredArgsConstructor
@@ -15,7 +17,6 @@ public class EmailSendService {
 
     public void sendEmail(String email, String title, String content) {
         MimeMessage message = mailSender.createMimeMessage();
-
         try {
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setTo(email); // 받는 사람
@@ -23,9 +24,7 @@ public class EmailSendService {
             helper.setText(content, true); // HTML true
             mailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("메일 전송 중 오류 발생", e);
+            throw new CustomException(ErrorCode.EMAIL_SEND_FAILED);
         }
-
     }
-
 }

@@ -6,5 +6,4 @@ public class ChallengeDefaults {
     public static final Integer POST_DIFF_TAGS_COUNT = 3;
     public static final Integer SIX_DAYS = 6;
     public static final Integer ZERO = 0;
-    public static final String CHALLENGE_KEY_FORMAT = "challenge:%s:%s";
 }

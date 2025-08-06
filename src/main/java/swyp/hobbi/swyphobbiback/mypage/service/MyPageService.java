@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @RequiredArgsConstructor
 @Slf4j
-public class MypageService {
+public class MyPageService {
 
     private final UserRepository userRepository;
     private final PostRepository postRepository;
@@ -170,11 +170,11 @@ public class MypageService {
         Map<Long, Long> likeCountMap = likeCountRepository.findLikeCountByPostIds(postIds).stream()
                 .collect(Collectors.toMap(LikeCountProjection::getPostId, LikeCountProjection::getLikeCount));
 
-        List<MyPost> myPosts = posts.stream()
+        List<MyPostResponse> myPosts = posts.stream()
                 .map(post -> {
                     Long commentCount = commentCountMap.getOrDefault(post.getPostId(), 0L);
                     Long likeCount = likeCountMap.getOrDefault(post.getPostId(), 0L);
-                    return MyPost.from(post, commentCount, likeCount);
+                    return MyPostResponse.from(post, commentCount, likeCount);
                 })
                 .toList();
 

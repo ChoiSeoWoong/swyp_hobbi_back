@@ -19,8 +19,10 @@ public class ReissueService {
     private final JwtTokenProvider jwtTokenProvider;
     private final RefreshTokenRepository refreshTokenRepository;
 
+    private static final String REFRESH_TOKEN_HEADER = "refreshToken";
+
     public ReissueResponse reissue(HttpServletRequest request) {
-        String refreshToken = request.getHeader("refreshToken");
+        String refreshToken = request.getHeader(REFRESH_TOKEN_HEADER);
         String email = jwtTokenProvider.getEmailFromToken(refreshToken); //토큰에서 이메일 추출
 
         RefreshToken dbToken = refreshTokenRepository.findById(email)

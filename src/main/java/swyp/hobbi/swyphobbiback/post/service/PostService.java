@@ -3,6 +3,8 @@ package swyp.hobbi.swyphobbiback.post.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ import swyp.hobbi.swyphobbiback.like.service.LikeService;
 import swyp.hobbi.swyphobbiback.post.domain.Post;
 import swyp.hobbi.swyphobbiback.post.dto.PostCreateRequest;
 import swyp.hobbi.swyphobbiback.post.dto.PostResponse;
+import swyp.hobbi.swyphobbiback.post.dto.PostSearchRequest;
 import swyp.hobbi.swyphobbiback.post.dto.PostUpdateRequest;
 import swyp.hobbi.swyphobbiback.post.repository.PostRepository;
 import swyp.hobbi.swyphobbiback.post_hobbytag.domain.PostHobbyTag;
@@ -75,30 +78,7 @@ public class PostService {
         List<String> uploadedImageUrls = new ArrayList<>();
         List<PostImage> postImages = post.getPostImages();
 
-        try {
-            if(imageFiles != null && !imageFiles.isEmpty()) {
-                for(MultipartFile imageFile : imageFiles) {
-                    String generatedUniqueFileName = postImageService.fileNameFormatter(imageFile);
-                    String imageUrl = postImageService.generateObjectStorageUrl(generatedUniqueFileName);
-                    PostImage savedPostImage = postImageService.savePostImage(imageFile, post, imageUrl);
-                    postImages.add(savedPostImage);
-
-                    eventPublisher.publishEvent(PostImageUploadEvent.builder()
-                            .postImageId(savedPostImage.getImageId())
-                            .file(imageFile)
-                            .fileName(generatedUniqueFileName)
-                            .build()
-                    );
-                    uploadedImageUrls.add(imageUrl);
-                }
-            }
-        } catch (Exception e) {
-            for(String uploadedImageUrl : uploadedImageUrls) {
-                postImageService.deletePostImage(uploadedImageUrl);
-            }
-
-            throw new FileUploadFailedException();
-        }
+        uploadImages(imageFiles, postImages, uploadedImageUrls, post);
 
         List<PostHobbyTag> postHobbyTags = post.getPostHobbyTags();
         if(!request.getHobbyTagNames().isEmpty()) {
@@ -157,30 +137,7 @@ public class PostService {
             }
         }
 
-        try {
-            if(newImageFiles != null && !newImageFiles.isEmpty()) {
-                for(MultipartFile imageFile : newImageFiles) {
-                    String generatedUniqueFileName = postImageService.fileNameFormatter(imageFile);
-                    String imageUrl = postImageService.generateObjectStorageUrl(generatedUniqueFileName);
-                    PostImage savedPostImage = postImageService.savePostImage(imageFile, post, imageUrl);
-                    postImages.add(savedPostImage);
-
-                    eventPublisher.publishEvent(PostImageUploadEvent.builder()
-                            .postImageId(savedPostImage.getImageId())
-                            .file(imageFile)
-                            .fileName(generatedUniqueFileName)
-                            .build()
-                    );
-                    uploadedImageUrls.add(imageUrl);
-                }
-            }
-        } catch (Exception e) {
-            for(String uploadedImageUrl : uploadedImageUrls) {
-                postImageService.deletePostImage(uploadedImageUrl);
-            }
-
-            throw new FileUploadFailedException();
-        }
+        uploadImages(newImageFiles, postImages, uploadedImageUrls, post);
 
         post.getPostHobbyTags().clear();
 
@@ -221,6 +178,7 @@ public class PostService {
         List<Long> postIds = fetchPostIds(tagExist, lastPostId, pageSize, userId);
         List<Long> userIds = userRepository.findUserIdsByPostIds(postIds);
         List<Post> posts = postRepository.findPostWithHobbyAndUser(postIds);
+
         Map<Long, Long> commentCountMap = commentRepository.countsByPostIds(postIds).stream()
                 .collect(Collectors.toMap(CommentCountProjection::getPostId, CommentCountProjection::getCommentCount));
         Map<Long, Long> likeCountMap = likeCountRepository.findLikeCountByPostIds(postIds).stream()
@@ -264,4 +222,45 @@ public class PostService {
         }
         return postRepository.findPostIdsWithTags(hobbyTagIds, lastPostId, pageSize);
     }
+
+    private void uploadImages(List<MultipartFile> imageFiles, List<PostImage> postImages, List<String> uploadedImageUrls, Post post) {
+        try {
+            if(imageFiles != null && !imageFiles.isEmpty()) {
+                for(MultipartFile imageFile : imageFiles) {
+                    String generatedUniqueFileName = postImageService.fileNameFormatter(imageFile);
+                    String imageUrl = postImageService.generateS3Url(generatedUniqueFileName);
+                    PostImage savedPostImage = postImageService.savePostImage(imageFile, post, imageUrl);
+                    postImages.add(savedPostImage);
+
+                    eventPublisher.publishEvent(PostImageUploadEvent.builder()
+                            .postImageId(savedPostImage.getImageId())
+                            .file(imageFile)
+                            .fileName(generatedUniqueFileName)
+                            .build()
+                    );
+                    uploadedImageUrls.add(imageUrl);
+                }
+            }
+        } catch (Exception e) {
+            for(String uploadedImageUrl : uploadedImageUrls) {
+                postImageService.deletePostImage(uploadedImageUrl);
+            }
+
+            throw new FileUploadFailedException();
+        }
+    }
+
+    public Page<PostResponse> search(PostSearchRequest request, Pageable pageable) {
+        Page<Post> posts = postRepository.searchPosts(
+                request.getTitlePlusContent(),
+                request.getAuthorNickname(),
+                request.getMbtiLetters(),
+                request.getHobbyTags(),
+                pageable
+        );
+
+        return posts.map(post -> PostResponse.from(post, 0L, 0L, false, null));
+    }
+
+
 }
