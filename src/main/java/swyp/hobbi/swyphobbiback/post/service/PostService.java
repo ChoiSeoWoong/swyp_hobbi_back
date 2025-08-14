@@ -3,8 +3,6 @@ package swyp.hobbi.swyphobbiback.post.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,7 +24,6 @@ import swyp.hobbi.swyphobbiback.like.service.LikeService;
 import swyp.hobbi.swyphobbiback.post.domain.Post;
 import swyp.hobbi.swyphobbiback.post.dto.PostCreateRequest;
 import swyp.hobbi.swyphobbiback.post.dto.PostResponse;
-import swyp.hobbi.swyphobbiback.post.dto.PostSearchRequest;
 import swyp.hobbi.swyphobbiback.post.dto.PostUpdateRequest;
 import swyp.hobbi.swyphobbiback.post.repository.PostRepository;
 import swyp.hobbi.swyphobbiback.post_hobbytag.domain.PostHobbyTag;
@@ -249,18 +246,4 @@ public class PostService {
             throw new FileUploadFailedException();
         }
     }
-
-    public Page<PostResponse> search(PostSearchRequest request, Pageable pageable) {
-        Page<Post> posts = postRepository.searchPosts(
-                request.getTitlePlusContent(),
-                request.getAuthorNickname(),
-                request.getMbtiLetters(),
-                request.getHobbyTags(),
-                pageable
-        );
-
-        return posts.map(post -> PostResponse.from(post, 0L, 0L, false, null));
-    }
-
-
 }

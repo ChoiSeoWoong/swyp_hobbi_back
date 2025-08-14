@@ -59,7 +59,8 @@ public class SecurityConfig {
                                 "/api/v1/comments/**", // 댓글 목록 조회 무한 스크롤
                                 "/error/**",
                                 "/oauth/**",
-                                "/login/oauth2/**"
+                                "/login/oauth2/**",
+                                "/api/v1/search/**"
                         ).permitAll()
                         .requestMatchers(
                                 "/api/v1/post/**",
